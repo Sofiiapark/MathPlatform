@@ -10,8 +10,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      RABBIT_HOST: rabbitmq
-      RABBIT_PORT: 5672
+      # Вказуємо повний рядок підключення, бо ти змінив user/pass в RabbitMQ
+      RABBITMQ_URL: "amqp://admin:admin@rabbitmq:5672"
     depends_on:
       - rabbitmq
     networks:
@@ -24,7 +24,12 @@ services:
     container_name: math_frontend
     restart: always
     ports:
-      - "8080:80"
+      - "8080:80" # Фронтенд буде доступний за адресою http://localhost:8080
+    environment:
+      # !!! ЦЕ КРИТИЧНО ДЛЯ ВИПРАВЛЕННЯ ПОМИЛКИ "process is not defined" !!!
+      - NODE_ENV=development
+      # Браузер має звертатися до бекенду по localhost (бо браузер не в Docker)
+      - REACT_APP_API_URL=http://localhost:3000/api
     depends_on:
       - api
     networks:
@@ -35,8 +40,8 @@ services:
     container_name: rabbit
     restart: always
     ports:
-      - "5672:5672"       # AMQP (бекенд)
-      - "15672:15672"     # панель RabbitMQ
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
