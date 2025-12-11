@@ -1,88 +1,48 @@
+version: "3.9"
+
 services:
-  rabbitmq:
-    image: rabbitmq:4-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    hostname: rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-    networks:
-      - app-net
-
-  auth:
-    build:
-      context: ./backend
-      dockerfile: auth/Dockerfile
-    depends_on:
-      - rabbitmq
-    networks:
-      - app-net
-
-  quiz:
-    build:
-      context: ./backend
-      dockerfile: quiz/Dockerfile
-    depends_on:
-      - rabbitmq
-    networks:
-      - app-net
-
-  ai:
-    build:
-      context: ./backend
-      dockerfile: ai/Dockerfile
-    depends_on:
-      - rabbitmq
-    networks:
-      - app-net
-
-  analytics:
-    build:
-      context: ./backend
-      dockerfile: analytics/Dockerfile
-    depends_on:
-      - rabbitmq
-    networks:
-      - app-net
-
-  notification:
-    build:
-      context: ./backend
-      dockerfile: notification/Dockerfile
-    depends_on:
-      - rabbitmq
-    networks:
-      - app-net
-
-  profile:
-    build:
-      context: ./backend
-      dockerfile: profile/Dockerfile
-    depends_on:
-      - rabbitmq
-    networks:
-      - app-net
-
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: math_api
+    restart: always
     ports:
       - "3000:3000"
+    environment:
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
     depends_on:
       - rabbitmq
     networks:
-      - app-net
+      - mathnet
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: math_frontend
+    restart: always
     ports:
       - "8080:80"
     depends_on:
       - api
     networks:
-      - app-net
+      - mathnet
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbit
+    restart: always
+    ports:
+      - "5672:5672"       # AMQP (бекенд)
+      - "15672:15672"     # панель RabbitMQ
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    networks:
+      - mathnet
 
 networks:
-  app-net:
+  mathnet:
     driver: bridge

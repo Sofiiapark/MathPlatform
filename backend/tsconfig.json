@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "rootDir": "src",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "strict": false,
+    "baseUrl": "src",
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@ai/*": ["ai/*"],
+      "@auth/*": ["auth/*"],
+      "@profile/*": ["profile/*"],
+      "@quiz/*": ["quiz/*"]
+    }
+  },
+  "include": ["src"]
+}

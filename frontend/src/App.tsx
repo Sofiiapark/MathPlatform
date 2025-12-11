@@ -1,10 +1,12 @@
+// @ts-ignore
 import React, { useState } from "react";
 
 export default function App() {
     console.log("App component is running!");
   const [question, setQuestion] = useState("");
 
-  async function api(method: string, body: any) {
+  // @ts-ignore
+    async function api(method: string, body: any) {
     await fetch(`/api/${method}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
