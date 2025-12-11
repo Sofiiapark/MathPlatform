@@ -5,19 +5,20 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
     plugins: [react()],
 
-    // КРИТИЧНИЙ ФІКС 1: Вирішує помилку "process is not defined"
-    // (process.argv та process.env)
+    // ОНОВЛЕНИЙ БЛОК 'define'
     define: {
+        // @ts-ignore
         'process': {
             env: {},
-            argv: [], // Імітуємо масив для process.argv.slice(2)
-            platform: 'browser'
+            argv: [],
+            platform: 'browser',
+            /*// !!! НОВИЙ ФІКС: Додаємо функцію cwd, яка повертає порожній рядок*/
+            cwd: () => '',
         },
         'process.env': {}
     },
 
-    // КРИТИЧНИЙ ФІКС 2: Налаштування проксі для викликів API
-    // Перенаправляє запити з 8080/api на бекенд (3000)
+    // Залишаємо проксі для API, якщо він ще потрібен
     server: {
         proxy: {
             '/api': {
