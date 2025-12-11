@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    // 1. **Змінено:** Використовуємо сучасний модуль, який підтримує Node.js v18+
+    "module": "NodeNext",
+
+    // 2. **Змінено:** Target відповідає можливостям сучасної Node.js
+    "target": "ES2022",
+
+    // 3. **Додано:** Для NodeNext module resolution потрібно вказати moduleResolution
+    "moduleResolution": "NodeNext",
+
+    // 4. **Додано:** Включаємо бібліотечні визначення для сучасних типів
+    "lib": ["es2022"],
+
+    "rootDir": "src",
+    "outDir": "dist",
+
+    // Залишаємо для коректної роботи з tsconfig-paths
+    "baseUrl": "./src",
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@ai/*": ["ai/*"],
+      "@auth/*": ["auth/*"],
+      "@profile/*": ["profile/*"],
+      "@quiz/*": ["quiz/*"]
+    },
+
+    // Залишаємо: Забезпечує коректну роботу імпорту/експорту Node.js
+    "esModuleInterop": true,
+    "strict": false // (Хоча рекомендується "strict": true)
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"] // Додано для оптимізації
+}

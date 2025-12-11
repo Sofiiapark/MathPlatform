@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json", // Розширюємо загальний файл
+  "include": [
+    "src/**/*",         // Включає файли цього сервісу
+    "../src/shared/**/*"
+    // Компілюємо лише файли цього сервісу
+  ],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "../"
+  }
+}

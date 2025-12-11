@@ -5,7 +5,8 @@ const app = express();
 app.use(express.json());
 
 async function sendEvent(route: string, payload: any) {
-    const conn = await amqp.connect('amqp://rabbitmq');
+    // Зміни рядок підключення на цей:
+    const conn = await amqp.connect(process.env.RABBITMQ_URL || 'amqp://rabbitmq');
     const channel = await conn.createChannel();
     await channel.assertExchange('math', 'topic', { durable: false });
 
