@@ -1,0 +1,2 @@
+{"component":"student","action":"joinGame","role":"student","payload":{"text":"Долучитись до гри","timestamp":"2025-10-21T13:26:38.658Z"},"timestamp":"2025-10-21T13:26:38.669Z","result":"Учень [student] додався до гри."}
+{"component":"teacher","action":"createTest","role":"teacher","payload":{"text":"Створити тест","timestamp":"2025-10-21T13:26:49.405Z"},"timestamp":"2025-10-21T13:26:49.411Z","result":"Викладач [teacher] створив тест."}

@@ -1,0 +1,38 @@
+{
+  "name": "rabbitmq-lab",
+  "version": "1.0.0",
+  "description": "Backend service for RabbitMQ lab",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && tsc-alias",
+    "start": "node -r tsconfig-paths/register dist/index.js",
+    "start:dev": "nodemon src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rabbitmq",
+    "express",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.1",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-jaeger": "^2.2.0",
+    "@opentelemetry/instrumentation-amqplib": "^0.55.0",
+    "@opentelemetry/sdk-node": "^0.208.0",
+    "@types/amqplib": "^0.10.7",
+    "amqplib": "^0.10.9",
+    "body-parser": "^2.2.1",
+    "express": "^5.1.0"
+  }
+}

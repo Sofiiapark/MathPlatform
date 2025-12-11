@@ -1,0 +1,12 @@
+[2025-10-20T15:52:27.668Z] platform.browse.guest: Переглянути платформу
+[2025-10-20T15:53:08.569Z] user.register.guest: Зареєструватись
+[2025-10-20T16:55:09.399Z] user.support.guest: Написати в техпідтримку
+[2025-10-20T18:34:41.038Z] student.takeTest.student: Пройти тест
+[2025-10-20T18:34:49.402Z] teacher.viewStats.teacher: Переглянути статистику
+[2025-10-20T18:34:57.430Z] teacher.viewStats.teacher: Переглянути статистику
+[2025-10-20T18:35:18.070Z] admin.launchGame.admin: Запустити гру
+[2025-10-21T08:17:40.971Z] student.takeTest.student: Пройти тест
+[2025-10-21T08:18:14.353Z] teacher.createTest.teacher: Створити тест
+[2025-10-21T08:18:39.799Z] student.schedule.student: Побудувати/змінити графік
+[2025-10-21T13:26:38.662Z] student.joinGame.student: Долучитись до гри
+[2025-10-21T13:26:49.406Z] teacher.createTest.teacher: Створити тест

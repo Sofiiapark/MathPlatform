@@ -1,0 +1,52 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // Environment Settings
+    "module": "commonjs", 
+    "target": "esnext",
+    "moduleResolution": "node", 
+    "esModuleInterop": true,
+    "types": ["node"],
+
+    // --- НАЛАШТУВАННЯ ДЛЯ ШЛЯХІВ ІМПОРТУ (Shared Modules) ---
+    // Встановлює базовий каталог для пошуку модулів, коли використовуються 
+    // не відносні шляхи. У контейнері це кореневий каталог.
+    "baseUrl": "..", 
+    
+    // Створює псевдонім (alias) "@shared/*", який веде до теки "shared/*".
+    // Це дозволить вам імпортувати: import { T } from "@shared/types"
+    "paths": {
+      "@shared/*": ["shared/*"] 
+    },
+    // --------------------------------------------------------
+
+    // File Layout
+    // Визначення кореневого каталогу та каталогу для виводу компіляції (рекомендовано)
+    "rootDir": "./src", 
+    "outDir": "./dist",
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitAny": true, // Рекомендовано для строгої перевірки (TS7006)
+
+    // Style Options
+    "noImplicitReturns": true, // Рекомендовано
+    "noUnusedLocals": true,    // Рекомендовано
+    
+    // Recommended Options
+    "strict": true,
+    "skipLibCheck": true,
+    "moduleDetection": "force"
+    
+    // Видалені: "jsx" - зазвичай не потрібен для бекенду Node.js; 
+    // "noUncheckedSideEffectImports" - може спричиняти проблеми з деякими бібліотеками.
+    // Якщо ви використовуєте чистий бекенд, `jsx` можна видалити.
+  }
+  // ------------------------------------
+}
