@@ -1,12 +1,20 @@
 {
-  "extends": "../../tsconfig.base.json", // Розширюємо загальний файл
-  "include": [
-    "src/**/*",         // Включає файли цього сервісу
-    "../src/shared/**/*"
-    // Компілюємо лише файли цього сервісу
-  ],
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "../"
-  }
+    "module": "NodeNext",
+    "target": "ES2022",
+    "moduleResolution": "NodeNext",
+
+    "rootDir": "..",
+    "outDir": "dist",
+
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["../shared/*"]
+    },
+
+    "esModuleInterop": true,
+    "strict": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

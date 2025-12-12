@@ -1,52 +1,97 @@
 version: "3.9"
 
 services:
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rabbit
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # AMQP протокол
+      - "15672:15672" # Веб-інтерфейс
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+      - RABBITMQ_DEFAULT_VHOST=/
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - mathnet
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development  # Використовуємо development stage
     container_name: math_api
-    restart: always
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      # Вказуємо повний рядок підключення, бо ти змінив user/pass в RabbitMQ
-      RABBITMQ_URL: "amqp://admin:admin@rabbitmq:5672"
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - CORS_ORIGIN=http://frontend:80,http://localhost:8080
+      - PORT=3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/dist
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     networks:
       - mathnet
+    command: npm run start:dev
+
+  ai:
+    build:
+      context: ./backend
+      dockerfile: src/ai/Dockerfile
+      target: development
+    container_name: math_ai
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - DOCKER=true
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - mathnet
+    command: sh -c "echo 'Waiting for RabbitMQ...' && sleep 5 && npx ts-node src/ai/src/index.ts"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: math_frontend
-    restart: always
+    restart: unless-stopped
     ports:
-      - "8080:80" # Фронтенд буде доступний за адресою http://localhost:8080
+      - "8080:80"
     environment:
-      # !!! ЦЕ КРИТИЧНО ДЛЯ ВИПРАВЛЕННЯ ПОМИЛКИ "process is not defined" !!!
       - NODE_ENV=development
-      # Браузер має звертатися до бекенду по localhost (бо браузер не в Docker)
       - REACT_APP_API_URL=http://localhost:3000/api
+      - WDS_SOCKET_PORT=0  # Фікс для Hot Reload
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - api
     networks:
       - mathnet
 
-  rabbitmq:
-    image: rabbitmq:4-management
-    container_name: rabbit
-    restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-    networks:
-      - mathnet
+volumes:
+  rabbitmq_data:
+    driver: local
 
 networks:
   mathnet:

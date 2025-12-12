@@ -1,4 +1,4 @@
-import { connectRabbit } from "../../shared/rabbit";
+import { connectRabbit } from "@shared/rabbit";
 
 (async () => {
   const { channel } = await connectRabbit();

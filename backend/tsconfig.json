@@ -20,15 +20,15 @@
     "paths": {
       "@shared/*": ["shared/*"],
       "@ai/*": ["ai/*"],
-      "@auth/*": ["auth/*"],
-      "@profile/*": ["profile/*"],
-      "@quiz/*": ["quiz/*"]
+      //"@auth/*": ["auth/*"],
+      //"@profile/*": ["profile/*"],
+      //"@quiz/*": ["quiz/*"]
     },
 
     // Залишаємо: Забезпечує коректну роботу імпорту/експорту Node.js
     "esModuleInterop": true,
     "strict": false // (Хоча рекомендується "strict": true)
   },
-  "include": ["src"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"] // Додано для оптимізації
 }

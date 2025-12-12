@@ -1,5 +1,5 @@
-import { connectRabbit } from "../../shared/rabbit";
-import { PlatformEvent } from "../../shared/types";
+import { connectRabbit } from "@shared/rabbit";
+import { PlatformEvent } from "@shared/types";
 
 (async () => {
   const { channel } = await connectRabbit();

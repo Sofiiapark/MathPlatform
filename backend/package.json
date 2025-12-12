@@ -7,6 +7,18 @@
     "build": "tsc && tsc-alias",
     "start": "node -r tsconfig-paths/register dist/index.js",
     "start:dev": "nodemon src/index.ts",
+    
+    "api": "ts-node src/index.ts",
+    "api:dev": "nodemon src/index.ts",
+    
+    "ai": "set RABBITMQ_URL=amqp://admin:admin@localhost:5672 && ts-node src/ai/src/index.ts",
+    "ai:dev": "set RABBITMQ_URL=amqp://admin:admin@localhost:5672 && nodemon src/ai/src/index.ts",
+    
+    "ai:ps": "$env:RABBITMQ_URL='amqp://admin:admin@localhost:5672' && ts-node src/ai/src/index.ts",
+    
+    "all": "concurrently --kill-others \"npm run api:dev\" \"npm run ai:dev\"",
+    "all:ps": "concurrently --kill-others \"npm run api:dev\" \"npm run ai:ps\"",
+    
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -19,6 +31,8 @@
   "devDependencies": {
     "@types/express": "^5.0.5",
     "@types/node": "^24.10.1",
+    "@types/ws": "^8.18.1",
+    "concurrently": "^9.1.2",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
@@ -33,6 +47,9 @@
     "@types/amqplib": "^0.10.7",
     "amqplib": "^0.10.9",
     "body-parser": "^2.2.1",
-    "express": "^5.1.0"
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "ws": "^8.18.3"
   }
 }
