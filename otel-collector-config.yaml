@@ -1,0 +1,30 @@
+# otel-collector-config.yaml (ВИПРАВЛЕНО)
+receivers:
+  otlp:
+    protocols:
+      # 1. Приймач gRPC (4317) - додано явний endpoint
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+      # 2. Приймач HTTP (4318) - КРИТИЧНО НЕОБХІДНИЙ для Node.js OTLP/HTTP
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  otlp:
+    # Експорт даних з Collector'а в Jaeger
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+processors:
+  batch:
+    send_batch_size: 10000
+    timeout: 10s
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp] # OTLP тепер включає обидва протоколи (4317, 4318)
+      processors: [batch]
+      exporters: [otlp]

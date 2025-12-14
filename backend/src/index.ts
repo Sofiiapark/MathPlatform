@@ -4,6 +4,8 @@ import cors from "cors";
 import { WebSocketServer, WebSocket } from "ws";
 import * as http from "http";
 import * as dotenv from "dotenv";
+import { trace, context, propagation, SpanStatusCode, Span } from "@opentelemetry/api";
+import { W3CTraceContextPropagator } from "@opentelemetry/core";
 
 // Завантажити змінні середовища з .env файлу
 dotenv.config();
@@ -28,12 +30,36 @@ const clients: Map<string, WebSocket> = new Map();
 
 // ---------------- Express + CORS ----------------
 const app = express();
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:8080", credentials: true }));
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || "http://localhost:8080").split(',');
+
+const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+        // Дозволяємо запити без "Origin" (наприклад, мобільні додатки, curl)
+        if (!origin) return callback(null, true);
+        
+        // Перевіряємо, чи джерело знаходиться у нашому списку дозволених
+        if (ALLOWED_ORIGINS.includes(origin)) {
+            callback(null, true);
+        } else {
+            // Забороняємо інші джерела
+            callback(new Error(`Not allowed by CORS: ${origin}`), false);
+        }
+    },
+    credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // HTTP server for both Express and WS
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+
+// ---------------- OpenTelemetry ----------------
+
+// OTel Propagator
+const propagator = new W3CTraceContextPropagator(); 
+const tracer = trace.getTracer('api-gateway-service');
 
 // ---------------- Helper ----------------
 function sleep(ms: number) {

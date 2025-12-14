@@ -6,7 +6,7 @@ services:
     container_name: rabbit
     restart: unless-stopped
     ports:
-      - "5672:5672"   # AMQP протокол
+      - "5672:5672" # AMQP протокол
       - "15672:15672" # Веб-інтерфейс
     environment:
       - RABBITMQ_DEFAULT_USER=admin
@@ -27,7 +27,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: development  # Використовуємо development stage
     container_name: math_api
     restart: unless-stopped
     ports:
@@ -44,6 +43,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     networks:
       - mathnet
     command: npm run start:dev
@@ -52,22 +53,58 @@ services:
     build:
       context: ./backend
       dockerfile: src/ai/Dockerfile
-      target: development
+      target: runtime # ВИПРАВЛЕНО: Ціль має бути "runtime"
     container_name: math_ai
     restart: unless-stopped
     environment:
       - NODE_ENV=development
       - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
       - DOCKER=true
+      # ВАЖЛИВО: Назва сервісу для OpenTelemetry
+      - SERVICE_NAME=ai-worker 
+      - OTEL_LOG_LEVEL=debug
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      # Монтування коду (використовується, якщо ви не робите npm install у фінальному образі)
+      - ./backend:/app 
+      - /app/node_modules # Кешування node_modules
     depends_on:
       rabbitmq:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     networks:
       - mathnet
-    command: sh -c "echo 'Waiting for RabbitMQ...' && sleep 5 && npx ts-node src/ai/src/index.ts"
+    # ОНОВЛЕНО: Попереднє завантаження OpenTelemetry SDK
+    command: sh -c "echo 'Waiting for RabbitMQ...' && sleep 5 && npx ts-node -r ./src/ai/src/otel-instrumentation.ts src/ai/src/index.ts"
+
+
+
+
+  
+    
+    # 1. OpenTelemetry Collector
+  otel-collector:
+   image: otel/opentelemetry-collector-contrib:0.87.0 # <--- ЗМІНИТИ ОБРАЗ
+   command: ["--config=./otel-collector-config.yaml"]
+   volumes:
+   - ./otel-collector-config.yaml:/otel-collector-config.yaml
+   
+   depends_on:
+   - jaeger
+   networks:
+      - mathnet
+
+  # 2. Jaeger UI (Візуалізатор Трасувань)
+  jaeger:
+    image: jaegertracing/all-in-one:1.52
+    ports:
+      # Jaeger UI (доступний з браузера)
+      - "16686:16686"
+      # Port для прийому трасувань від Collector'а
+      - "14250:14250" # Порт Thrift Collector (для Collector Contrib)
+      - "4317:4317" # Порт OTLP Collector (для OTel Collector)
+    networks:
+      - mathnet
 
   frontend:
     build:
@@ -80,7 +117,7 @@ services:
     environment:
       - NODE_ENV=development
       - REACT_APP_API_URL=http://localhost:3000/api
-      - WDS_SOCKET_PORT=0  # Фікс для Hot Reload
+      - WDS_SOCKET_PORT=0 # Фікс для Hot Reload
     volumes:
       - ./frontend:/app
       - /app/node_modules

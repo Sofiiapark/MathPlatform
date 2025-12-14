@@ -7,18 +7,13 @@
     "build": "tsc && tsc-alias",
     "start": "node -r tsconfig-paths/register dist/index.js",
     "start:dev": "nodemon src/index.ts",
-    
     "api": "ts-node src/index.ts",
     "api:dev": "nodemon src/index.ts",
-    
     "ai": "set RABBITMQ_URL=amqp://admin:admin@localhost:5672 && ts-node src/ai/src/index.ts",
     "ai:dev": "set RABBITMQ_URL=amqp://admin:admin@localhost:5672 && nodemon src/ai/src/index.ts",
-    
     "ai:ps": "$env:RABBITMQ_URL='amqp://admin:admin@localhost:5672' && ts-node src/ai/src/index.ts",
-    
     "all": "concurrently --kill-others \"npm run api:dev\" \"npm run ai:dev\"",
     "all:ps": "concurrently --kill-others \"npm run api:dev\" \"npm run ai:ps\"",
-    
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -41,6 +36,7 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.67.2",
     "@opentelemetry/exporter-jaeger": "^2.2.0",
     "@opentelemetry/instrumentation-amqplib": "^0.55.0",
     "@opentelemetry/sdk-node": "^0.208.0",
