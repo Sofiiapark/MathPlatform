@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "dev:ts": "ts-node src/index.ts"
+  }
+
+}
