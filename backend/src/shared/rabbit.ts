@@ -1,5 +1,24 @@
 // shared/rabbit.ts
 import * as amqp from "amqplib";
+import {
+  context,
+  propagation,
+  Span,
+  trace,
+  TextMapPropagator,
+  TextMapSetter,
+} from "@opentelemetry/api";
+
+import { W3CTraceContextPropagator } from "@opentelemetry/core";
+import { PlatformEvent } from "./types";
+
+const propagator: TextMapPropagator = new W3CTraceContextPropagator();
+const headerSetter: TextMapSetter<Record<string, any>> = {
+  set(carrier, key, value) {
+    carrier[key] = value;
+  },
+};
+
 
 export async function connectRabbit() {
   // Для Docker композиту: amqp://admin:admin@rabbitmq:5672
@@ -54,4 +73,46 @@ export async function connectRabbit() {
     
     throw error;
   }
+}
+
+export async function publishEvent(
+    channel: amqp.Channel, 
+    exchange: string, 
+    routingKey: string, 
+    event: Omit<PlatformEvent, 'timestamp'> & { clientID?: string | null }, 
+    span?: Span | null
+) {
+    // 1. Створюємо об'єкт для RabbitMQ заголовків
+    const headers: Record<string, any> = {};
+
+    // 2. Інжектуємо контекст трасування
+    const contextToInject = span ? trace.setSpan(context.active(), span) : context.active();
+    propagator.inject(contextToInject, headers, headerSetter);
+
+    // 3. Формуємо повне повідомлення (додаємо timestamp)
+    const fullMessage: PlatformEvent = {
+        ...event,
+        timestamp: new Date().toISOString(), // Додаємо timestamp тут
+    };
+    
+    // 4. Публікуємо повідомлення
+    channel.publish(
+        exchange,
+        routingKey,
+        Buffer.from(JSON.stringify(fullMessage)),
+        { 
+            persistent: true,
+            headers: headers // Додаємо заголовки OTel
+        } 
+    );
+    
+    // 5. Додаємо подію трасування
+    if (span) {
+        span.addEvent('Event Published to RabbitMQ', {
+            'event.exchange': exchange,
+            'event.routing_key': routingKey,
+            'event.component': event.component,
+            'event.action': event.action,
+        });
+    }
 }

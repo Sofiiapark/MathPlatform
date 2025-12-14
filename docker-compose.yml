@@ -76,12 +76,158 @@ services:
       - mathnet
     # ОНОВЛЕНО: Попереднє завантаження OpenTelemetry SDK
     command: sh -c "echo 'Waiting for RabbitMQ...' && sleep 5 && npx ts-node -r ./src/ai/src/otel-instrumentation.ts src/ai/src/index.ts"
+  
+  user:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: math_user
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - PORT=3001
+      - SERVICE_NAME=user-module-service # Назва для трасування
+      - OTEL_LOG_LEVEL=debug
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks:
+    - mathnet
+    command: npx ts-node -r ./src/user/src/otel-instrumentation.ts src/user/src/index.ts
 
-
-
+  progress:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: math_progress
+    restart: unless-stopped
+    ports:
+    - "3002:3002"
+    environment:
+    - NODE_ENV=development
+    - PORT=3002
+    - SERVICE_NAME=progress-service
+    - OTEL_LOG_LEVEL=debug
+    volumes:
+    - ./backend:/app
+    - /app/node_modules
+    - /app/dist
+    depends_on:
+      otel-collector:
+       condition: service_started
+    networks:
+    - mathnet
+    command: npx ts-node -r ./src/progress/src/otel-instrumentation.ts src/progress/src/index.ts
 
   
-    
+  achievement:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: math_achievement
+    restart: unless-stopped
+    ports:
+     - "3003:3003"
+    environment:
+     - NODE_ENV=development
+     - PORT=3003
+     - SERVICE_NAME=achievement-service # Назва для трасування
+     - OTEL_LOG_LEVEL=debug
+    volumes:
+     - ./backend:/app
+     - /app/node_modules
+     - /app/dist
+    depends_on:
+      otel-collector:
+       condition: service_started
+    networks:
+      - mathnet
+    command: npx ts-node -r ./src/achievement/src/otel-instrumentation.ts src/achievement/src/index.ts
+  notification:
+    build:
+     context: ./backend
+     dockerfile: Dockerfile
+    container_name: math_notification
+    restart: unless-stopped
+    ports:
+    - "3004:3004"
+    environment:
+    - NODE_ENV=development
+    - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+    - PORT=3004
+    - SERVICE_NAME=notification-service # Назва для трасування
+    - OTEL_LOG_LEVEL=debug
+    volumes:
+    - ./backend:/app
+    - /app/node_modules
+    - /app/dist
+    depends_on:
+      rabbitmq:
+       condition: service_healthy
+      otel-collector:
+       condition: service_started
+    networks:
+    - mathnet
+    command: npx ts-node -r ./src/notification/src/otel-instrumentation.ts src/notification/src/index.ts
+
+  auth:
+    build:
+       context: ./backend
+       dockerfile: Dockerfile
+    container_name: math_auth # Додайте ім'я контейнера
+    restart: unless-stopped
+    environment:
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+      SERVICE_NAME: auth-service
+      DOCKER: "true"
+      OTEL_LOG_LEVEL: debug
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      rabbitmq:
+        condition: service_healthy 
+      otel-collector:
+        condition: service_started
+    networks:
+      - mathnet
+    command: npx ts-node -r ./src/auth/src/otel-instrumentation.ts src/auth/src/index.ts
+      
+  quiz:
+    build:
+       context: ./backend
+       dockerfile: Dockerfile
+    container_name: math_quiz # Додайте ім'я контейнера
+    restart: unless-stopped
+    environment:
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+      SERVICE_NAME: quiz-service
+      DOCKER: "true"
+      OTEL_LOG_LEVEL: debug
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      rabbitmq:
+        condition: service_healthy # ❗ ВИПРАВЛЕНО
+      otel-collector:
+        condition: service_started
+    networks:
+      - mathnet
+    # ❗ ДОДАНО: Команда запуску споживача з OTel
+    command: npx ts-node -r ./src/quiz/src/otel-instrumentation.ts src/quiz/src/index.ts
+
     # 1. OpenTelemetry Collector
   otel-collector:
    image: otel/opentelemetry-collector-contrib:0.87.0 # <--- ЗМІНИТИ ОБРАЗ

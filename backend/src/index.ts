@@ -113,11 +113,33 @@ async function connectRabbitWithRetry() {
 }
 
 // ---------------- Publish helper ----------------
+// ---------------- Publish helper (ОНОВЛЕНО) ----------------
 async function sendEvent(route: string, payload: any) {
-  if (!rabbitChannel) throw new Error("RabbitMQ channel not ready");
-  const full = { payload, timestamp: new Date().toISOString() };
-  rabbitChannel.publish(EXCHANGE, route, Buffer.from(JSON.stringify(full)), { persistent: true });
-  console.log(`[PUB] ${route} ->`, full);
+ if (!rabbitChannel) throw new Error("RabbitMQ channel not ready");
+ 
+ // 1. Отримуємо активний OTel контекст
+ const activeContext = context.active();
+ 
+ // 2. Створюємо заголовки для передачі контексту
+ const headers: { [key: string]: string } = {};
+ 
+ // 3. Інжект поточного Trace Context у заголовки
+ propagation.inject(activeContext, headers);
+
+ // Формуємо повне повідомлення
+ const full = { payload, timestamp: new Date().toISOString() };
+ 
+ // Публікуємо повідомлення, включаючи заголовки
+ rabbitChannel.publish(
+ EXCHANGE, 
+ route, 
+ Buffer.from(JSON.stringify(full)), 
+ { 
+ persistent: true,
+ headers: headers // <--- КЛЮЧОВЕ ДОДАВАННЯ
+ }
+ );
+ console.log(`[PUB] ${route} ->`, full);
 }
 
 // ---------------- Consumer for async responses ----------------
@@ -126,7 +148,7 @@ async function setupResponseConsumer() {
 
   const { queue } = await rabbitChannel.assertQueue("", { exclusive: true });
   await rabbitChannel.bindQueue(queue, EXCHANGE, "ai.answer.*");
-  await rabbitChannel.bindQueue(queue, EXCHANGE, "quiz.testCompleted.*");
+  await rabbitChannel.bindQueue(queue, EXCHANGE, "quiz.testCompleted");
 
   rabbitChannel.prefetch(10);
 
@@ -210,27 +232,57 @@ app.post("/api/register", async (req, res) => {
 });
 
 app.post("/api/takeTest", async (req, res) => {
-  try {
-    const { testId, clientID } = req.body;
-    if (!clientID) return res.status(400).json({ ok: false, error: "clientID required" });
-    await sendEvent("quiz.takeTest", { testId, clientID });
-    res.json({ ok: true, message: "Test submitted, awaiting results." });
-  } catch (err) {
-    console.error("/api/takeTest error:", err);
-    res.status(500).json({ ok: false });
-  }
+  try {
+    const { testId, clientID } = req.body;
+    if (!clientID) return res.status(400).json({ ok: false, error: "clientID required" });
+
+    const eventToSend = {
+        testId,
+        clientID
+    };
+
+    // Quiz Consumer очікує: { payload: { testId, clientID }, ... }
+    await sendEvent("quiz.takeTest", eventToSend); // передаємо eventToSend як payload
+    
+    res.json({ ok: true, message: "Test submitted, awaiting results." });
+  } catch (err) {
+    console.error("/api/takeTest error:", err);
+    res.status(500).json({ ok: false });
+  }
 });
 
+// ... (у секції Express routes, де визначено app.post)
+
 app.post("/api/ai", async (req, res) => {
-  try {
-    const { question, clientID } = req.body;
-    if (!clientID) return res.status(400).json({ ok: false, error: "clientID required" });
-    await sendEvent(`ai.ask.${clientID}`, { question, clientID });
-    res.json({ ok: true, message: "AI request accepted, awaiting response." });
-  } catch (err) {
-    console.error("/api/ai error:", err);
-    res.status(500).json({ ok: false });
-  }
+ // Отримуємо OTel Tracer, визначений раніше
+ const tracer = trace.getTracer('api-gateway-service');
+ 
+ // Створюємо активний Span, який автоматично стає батьківським для sendEvent
+ tracer.startActiveSpan('api.handle_ai_request', async (span) => { // <--- ЗМІНА
+ try {
+ const { question, clientID } = req.body; 
+ // Додаємо корисну інформацію (атрибути) до спану
+ span.setAttribute('request.type', 'ai_query');
+ span.setAttribute('user.client_id', clientID);
+
+ if (!clientID) {
+ span.setStatus({ code: SpanStatusCode.ERROR, message: "clientID required" });
+ span.end();
+ return res.status(400).json({ ok: false, error: "clientID required" });
+ }
+
+ // sendEvent (тепер з інжекцією OTel Context) буде дочірнім спаном
+ await sendEvent(`ai.ask.${clientID}`, { question, clientID });
+
+ res.json({ ok: true, message: "AI request accepted, awaiting response." });
+ } catch (err: any) {
+ console.error("/api/ai error:", err);
+ span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+ res.status(500).json({ ok: false });
+ } finally {
+ span.end(); // Закриваємо Span, перш ніж повертати відповідь
+ }
+ });
 });
 
 app.get("/health", (_req, res) => {
